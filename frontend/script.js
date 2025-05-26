@@ -22,7 +22,7 @@ document.getElementById("myForm").addEventListener("submit", (event) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ name }), // Body mit dem Namen
+    body: JSON.stringify({ "name": name }), // Body mit dem Namen
   })
     .then((response) => response.json())
     .then((data) => {
