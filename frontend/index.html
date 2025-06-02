@@ -2,19 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Node.js Kommunikation</title>
+    <title>Simple CRUD</title>
   </head>
   <body>
-    <h1 id="message"></h1>
+    <h1>Einträge</h1>
+    <ul id="itemList"></ul>
 
-    <form id="myForm">
-      <label for="name">Name eingeben:</label>
-      <input type="text" id="name" name="name" required />
-      <button type="submit">Absenden</button>
-    </form>
-
-    <div id="response"></div>
+    <h2>Neues Element hinzufügen</h2>
+    <input type="text" id="newItem" placeholder="Neues Item" />
+    <button onclick="addItem()">Hinzufügen</button>
 
     <script src="script.js"></script>
   </body>

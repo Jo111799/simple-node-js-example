@@ -1,70 +1,75 @@
-import express from "express";
-import cors from "cors";
+// Importieren der benötigten Module
+import express from "express"; 
+import fs from "fs"; // Dateisystem-Modul, um mit Dateien zu arbeiten
+import cors from "cors"; 
 
-const app = express();
-// Erstelle eine neue Express-Anwendung. Diese Anwendung wird deinen Webserver darstellen.
+const app = express(); // Initialisieren der Express-Anwendung
+const PORT = 3000; // Port, auf dem der Server laufen soll
+const DB_FILE = "db.json"; // Datei, in der die Daten gespeichert werden
 
-// CORS aktivieren: Erlaube, dass der Server Anfragen von anderen Webseiten akzeptiert.
+// Middleware aktivieren:
+// Erlaubt Cross-Origin-Zugriffe aller Frontend-Clients
 app.use(cors());
-// Mit dieser Zeile wird CORS aktiviert, so dass der Server Anfragen von anderen Ursprüngen (z. B. http://127.0.0.1:8080) akzeptiert.
-
-// Middleware zum Parsen von JSON-Body (wichtig für POST-Requests mit JSON-Daten)
+// Erlaubt das Parsen von JSON-Daten im Body von Anfragen mit application/json
 app.use(express.json());
 
-// Middleware zum Loggen von Anfragen
-app.use((req, res, next) => {
-  const currentTime = new Date().toISOString(); // Aktuellen Zeitstempel holen
-  console.log(`[${currentTime}] ${req.method} ${req.url}`); // HTTP-Methode und URL in der Konsole ausgeben
-  next(); // Wichtig, um die Anfrage an die nächste Middleware oder Route weiterzuleiten
+/**
+ * Liest den Inhalt der Datenbankdatei (db.json) und gibt das geparste JSON zurück.
+ */
+function readDB() {
+  return JSON.parse(fs.readFileSync(DB_FILE, "utf-8"));
+}
+
+/**
+ * Schreibt die übergebenen Daten als formatiertes JSON in die Datenbankdatei.
+ * @param {Array} data - Die zu speichernden Daten
+ */
+function writeDB(data) {
+  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+}
+
+// GET-Endpunkt: Gibt alle Items zurück
+app.get("/items", (req, res) => {
+  res.json(readDB()); // Antwort ist der Inhalt der Datenbank
 });
 
-// Eine Route für "/api/message" definieren, die auf GET-Anfragen reagiert.
-// Sowohl res (Response) als auch req (Request) sind Objekte in Express. Sie repräsentieren die HTTP-Anfrage und die HTTP-Antwort.
-app.get("/api/message", (req, res) => {
-  // Wenn jemand die URL "/api/message" aufruft, wird dieser Code ausgeführt.
-
-  res.status(200);
-  res.json({ message: "Hallo aus Node.js!" });
-  // Der Server antwortet mit einem JSON-Objekt, das die Nachricht "Hallo aus Node.js!" enthält.
-
-  // Alternativ: res.sendStatus(200); // Antwort mit Statuscode 200 (OK) senden
+// POST-Endpunkt: Fügt ein neues Item hinzu
+app.post("/items", (req, res) => {
+  const data = readDB(); // Aktuelle Daten aus der Datei lesen
+  data.push(req.body); // Neues Item hinzufügen
+  writeDB(data); // Daten zurück in die Datei schreiben
+  res.status(201).json({ message: "Item added" }); // Erfolgsantwort
 });
 
-// Neue POST-Route, die Body- und Query-Parameter verarbeitet
-app.post("/api/greet", (req, res) => {
-  // Name wird aus dem JSON-Body geholt
-  const { name } = req.body;
-  // Sprache wird aus den Query-Parametern geholt
-  const { lang } = req.query;
+// PUT-Endpunkt: Aktualisiert ein bestehendes Item anhand seiner ID (Index in der Liste)
+app.put("/items/:id", (req, res) => {
+  const data = readDB(); // Aktuelle Daten lesen
+  const id = parseInt(req.params.id); // ID aus der URL holen und in Zahl umwandeln
 
-  // Prüfe, ob ein Name im Body gesendet wurde
-  if (!name) {
-    res.status(400);
-    return res.json({ error: "Kein Name im Body angegeben!" });
-  }
-
-  // Begrüßung abhängig von der Sprache zusammensetzen
-  let greeting;
-  if (lang === "de") {
-    greeting = `Hallo, ${name}!`;
-  } else if (lang === "en") {
-    greeting = `Hello, ${name}!`;
+  if (data[id]) {
+    data[id] = req.body; // Item an der Stelle ersetzen
+    writeDB(data); // Geänderte Daten speichern
+    res.json({ message: "Item updated" }); // Erfolgsantwort
   } else {
-    greeting = `Hi, ${name}!`;
+    res.status(404).json({ message: "Item not found" }); // Fehler, wenn ID ungültig
   }
-
-  // Die Begrüßung als JSON an den Client zurückgeben
-  res.json({ "greeting": greeting });
 });
 
-// Lege die Portnummer fest, auf der der Server laufen soll.
-const PORT = 3000;
-// Dies ist der Port, auf dem der Server Anfragen entgegennimmt. In diesem Fall ist es Port 3000.
+// DELETE-Endpunkt: Löscht ein Item anhand seiner ID (Index)
+app.delete("/items/:id", (req, res) => {
+  const data = readDB(); // Daten lesen
+  const id = parseInt(req.params.id); // ID aus URL extrahieren
 
-// Starte den Server und lasse ihn auf dem angegebenen Port lauschen.
+  if (data[id]) {
+    data.splice(id, 1); // Eintrag an Position ID entfernen
+    writeDB(data); // Datei aktualisieren
+    res.json({ message: "Item deleted" }); // Erfolgsantwort
+  } else {
+    res.status(404).json({ message: "Item not found" }); // Fehlerantwort
+  }
+});
+
+// Startet den Server auf dem angegebenen Port
 app.listen(PORT, () => {
-  // Der Server beginnt, auf Anfragen zu hören.
-
   console.log(`Server läuft auf http://localhost:${PORT}`);
-  // Wenn der Server läuft, gibt der Code diese Nachricht in der Konsole aus, damit du weißt, dass der Server gestartet wurde.
 });

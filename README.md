@@ -31,19 +31,16 @@ http-server
 cd backend
 ```
 
-2. npm initialisieren
-
-```
-npm init
-```
-
-3. Packages installieren
+2. Packages installieren
 ```
 npm install
 ```
 
-4. Skript ausführen bzw. Webserver starten
+3. Skript ausführen bzw. Webserver starten
 
+```bash
+npm start
 ```
-node server.js
-```
+
+Info: Alternativ auch `npm run start` (`npm start` ist gemapped auf `npm run start`)
+
